@@ -22,16 +22,23 @@ export default function Projects() {
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  useEffect(() => {
-    fetchProjects();
-    fetchUsers();
-  }, []);
+  const fetchTasks = async (projectId) => {
+    setTaskLoading(true);
+    try {
+      const res = await api.get(`/tasks?projectId=${projectId}`);
+      setTasks(res.data);
+    } catch (e) {
+      setTasks([]);
+    } finally {
+      setTaskLoading(false);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
       const res = await api.get('/projects');
       setProjects(res.data);
-      if (res.data.length > 0 && !selectedProject) {
+      if (res.data.length > 0) {
         setSelectedProject(res.data[0]);
         fetchTasks(res.data[0].id);
       }
@@ -49,17 +56,10 @@ export default function Projects() {
     } catch (e) {}
   };
 
-  const fetchTasks = async (projectId) => {
-    setTaskLoading(true);
-    try {
-      const res = await api.get(`/tasks?projectId=${projectId}`);
-      setTasks(res.data);
-    } catch (e) {
-      setTasks([]);
-    } finally {
-      setTaskLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchProjects();
+    fetchUsers();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectProject = (p) => {
     setSelectedProject(p);
@@ -114,7 +114,7 @@ export default function Projects() {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
+      await api.put(`/tasks/${taskId}`, { status: newStatus });
       fetchTasks(selectedProject.id);
     } catch (e) {
       setError('Failed to update task status');
@@ -122,17 +122,11 @@ export default function Projects() {
   };
 
   const statusColor = {
-    TODO: '#667eea',
-    IN_PROGRESS: '#f59e0b',
-    DONE: '#10b981',
-    OVERDUE: '#ef4444'
+    TODO: '#667eea', IN_PROGRESS: '#f59e0b', DONE: '#10b981', OVERDUE: '#ef4444'
   };
 
   const statusIcon = {
-    TODO: '📋',
-    IN_PROGRESS: '🔄',
-    DONE: '✅',
-    OVERDUE: '⚠️'
+    TODO: '📋', IN_PROGRESS: '🔄', DONE: '✅', OVERDUE: '⚠️'
   };
 
   if (loading) return (
@@ -144,7 +138,6 @@ export default function Projects() {
 
   return (
     <div style={s.page}>
-      {/* Navbar */}
       <nav style={s.nav}>
         <div style={s.navLeft}>
           <span style={s.navLogo}>✅ Team Task Manager</span>
@@ -159,7 +152,6 @@ export default function Projects() {
       </nav>
 
       <div style={s.container}>
-        {/* Alerts */}
         {error && (
           <div style={s.errorBox}>
             ⚠️ {error}
@@ -174,19 +166,16 @@ export default function Projects() {
         )}
 
         <div style={s.layout}>
-          {/* Left Panel — Projects */}
           <div style={s.leftPanel}>
             <div style={s.panelHeader}>
               <h2 style={s.panelTitle}>📁 Projects</h2>
               {user?.role === 'ADMIN' && (
-                <button style={s.addBtn}
-                  onClick={() => { setShowProjectForm(!showProjectForm); setError(''); }}>
+                <button style={s.addBtn} onClick={() => { setShowProjectForm(!showProjectForm); setError(''); }}>
                   {showProjectForm ? '✕ Cancel' : '+ New'}
                 </button>
               )}
             </div>
 
-            {/* Project Form */}
             {showProjectForm && (
               <form onSubmit={handleCreateProject} style={s.form}>
                 <div style={s.formTitle}>Create New Project</div>
@@ -207,13 +196,11 @@ export default function Projects() {
               </form>
             )}
 
-            {/* Project List */}
             {projects.length === 0 ? (
               <div style={s.emptyPanel}>
                 <div style={{ fontSize: '36px' }}>📂</div>
                 <p style={{ color: '#888', fontSize: '14px', margin: '8px 0' }}>No projects yet</p>
-                {user?.role === 'ADMIN' &&
-                  <p style={{ color: '#bbb', fontSize: '12px' }}>Click "+ New" to create one</p>}
+                {user?.role === 'ADMIN' && <p style={{ color: '#bbb', fontSize: '12px' }}>Click "+ New" to create one</p>}
               </div>
             ) : projects.map(p => (
               <div key={p.id}
@@ -224,38 +211,31 @@ export default function Projects() {
                 }}
                 onClick={() => handleSelectProject(p)}>
                 <div style={s.projectName}>{p.name}</div>
-                <div style={s.projectMeta}>
-                  {p.tasks?.length || 0} tasks · {p.members?.length || 0} members
-                </div>
+                <div style={s.projectMeta}>{p.tasks?.length || 0} tasks · {p.members?.length || 0} members</div>
               </div>
             ))}
           </div>
 
-          {/* Right Panel — Tasks */}
           <div style={s.rightPanel}>
             {!selectedProject ? (
               <div style={s.emptyState}>
                 <div style={{ fontSize: '52px', marginBottom: '15px' }}>👈</div>
                 <p style={{ color: '#888', fontWeight: '600', fontSize: '16px' }}>Select a project to view tasks</p>
-                <p style={{ color: '#bbb', fontSize: '14px' }}>Choose from the project list on the left</p>
               </div>
             ) : (
               <>
-                {/* Task Header */}
                 <div style={s.taskHeader}>
                   <div>
                     <h2 style={s.taskTitle}>{selectedProject.name}</h2>
                     <p style={s.taskSubtitle}>{tasks.length} task{tasks.length !== 1 ? 's' : ''} in this project</p>
                   </div>
                   {user?.role === 'ADMIN' && (
-                    <button style={s.addBtn}
-                      onClick={() => { setShowTaskForm(!showTaskForm); setError(''); }}>
+                    <button style={s.addBtn} onClick={() => { setShowTaskForm(!showTaskForm); setError(''); }}>
                       {showTaskForm ? '✕ Cancel' : '+ Add Task'}
                     </button>
                   )}
                 </div>
 
-                {/* Task Form */}
                 {showTaskForm && (
                   <form onSubmit={handleCreateTask} style={s.form}>
                     <div style={s.formTitle}>Create New Task</div>
@@ -274,9 +254,7 @@ export default function Projects() {
                       onChange={e => setTaskForm({ ...taskForm, assignedToId: e.target.value })}>
                       <option value="">— Unassigned —</option>
                       {users.map(u => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.role})
-                        </option>
+                        <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
                       ))}
                     </select>
                     <label style={s.label}>Due Date</label>
@@ -290,7 +268,6 @@ export default function Projects() {
                   </form>
                 )}
 
-                {/* Task List */}
                 {taskLoading ? (
                   <div style={s.emptyState}>
                     <div style={{ fontSize: '36px' }}>⏳</div>
@@ -302,17 +279,13 @@ export default function Projects() {
                     <p style={{ color: '#888', fontWeight: '600' }}>No tasks yet</p>
                     {user?.role === 'ADMIN'
                       ? <p style={{ color: '#bbb', fontSize: '13px' }}>Click "+ Add Task" to create the first task</p>
-                      : <p style={{ color: '#bbb', fontSize: '13px' }}>No tasks have been assigned to this project yet</p>}
+                      : <p style={{ color: '#bbb', fontSize: '13px' }}>No tasks assigned yet</p>}
                   </div>
                 ) : tasks.map(t => (
                   <div key={t.id} style={s.taskCard}>
                     <div style={s.taskLeft}>
-                      <div style={s.taskName}>
-                        {statusIcon[t.status]} {t.title}
-                      </div>
-                      {t.description && (
-                        <div style={s.taskDesc}>{t.description}</div>
-                      )}
+                      <div style={s.taskName}>{statusIcon[t.status]} {t.title}</div>
+                      {t.description && <div style={s.taskDesc}>{t.description}</div>}
                       <div style={s.taskMeta}>
                         {t.assignedTo && <span>👤 {t.assignedTo.name}</span>}
                         {t.dueDate && (
@@ -320,17 +293,14 @@ export default function Projects() {
                             📅 Due: {new Date(t.dueDate).toLocaleDateString()}
                           </span>
                         )}
-                        {!t.assignedTo && !t.dueDate && (
-                          <span style={{ color: '#ccc' }}>No assignee · No due date</span>
-                        )}
+                        {!t.assignedTo && !t.dueDate && <span style={{ color: '#ccc' }}>No assignee · No due date</span>}
                       </div>
                     </div>
                     <div style={s.taskRight}>
                       <span style={{ ...s.statusBadge, background: statusColor[t.status] }}>
                         {t.status.replace('_', ' ')}
                       </span>
-                      <select style={s.statusSelect}
-                        value={t.status}
+                      <select style={s.statusSelect} value={t.status}
                         onChange={e => handleStatusChange(t.id, e.target.value)}>
                         <option value="TODO">📋 TODO</option>
                         <option value="IN_PROGRESS">🔄 IN PROGRESS</option>
@@ -351,7 +321,6 @@ export default function Projects() {
 const s = {
   page: { minHeight: '100vh', background: '#f7f8fc', fontFamily: "'Segoe UI', sans-serif" },
   loadingPage: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f7f8fc' },
-
   nav: { background: 'white', padding: '0 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 100 },
   navLeft: { display: 'flex', alignItems: 'center', gap: '28px' },
   navLogo: { fontWeight: '800', fontSize: '18px', color: '#1a1a2e' },
@@ -360,36 +329,28 @@ const s = {
   roleBadge: { background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', padding: '3px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' },
   navUser: { color: '#555', fontSize: '14px' },
   logoutBtn: { padding: '8px 18px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '14px' },
-
   container: { maxWidth: '1200px', margin: '0 auto', padding: '25px 20px' },
-
   errorBox: { background: '#fff5f5', border: '1px solid #feb2b2', color: '#c53030', padding: '12px 16px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   successBox: { background: '#f0fff4', border: '1px solid #9ae6b4', color: '#276749', padding: '12px 16px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   closeBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'inherit', padding: '0 4px' },
-
   layout: { display: 'flex', gap: '20px', alignItems: 'flex-start' },
-
   leftPanel: { width: '280px', flexShrink: 0, background: 'white', borderRadius: '14px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minHeight: '500px' },
   panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
   panelTitle: { margin: 0, fontSize: '17px', fontWeight: '700', color: '#1a1a2e' },
   addBtn: { padding: '7px 14px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '700' },
-
   projectCard: { padding: '12px 14px', borderRadius: '10px', marginBottom: '8px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid #f0f0f0' },
   projectName: { fontWeight: '600', color: '#1a1a2e', fontSize: '14px', marginBottom: '4px' },
   projectMeta: { color: '#aaa', fontSize: '12px' },
   emptyPanel: { textAlign: 'center', padding: '40px 10px' },
-
   rightPanel: { flex: 1, background: 'white', borderRadius: '14px', padding: '22px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minHeight: '500px' },
   taskHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' },
   taskTitle: { margin: '0 0 4px', fontSize: '20px', fontWeight: '800', color: '#1a1a2e' },
   taskSubtitle: { margin: 0, color: '#aaa', fontSize: '13px' },
-
   form: { background: '#fafbfc', border: '1px solid #eef0f4', borderRadius: '12px', padding: '18px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px' },
   formTitle: { fontWeight: '700', color: '#1a1a2e', fontSize: '15px', marginBottom: '4px' },
   label: { fontSize: '13px', fontWeight: '600', color: '#555' },
   input: { padding: '10px 14px', border: '2px solid #eef0f4', borderRadius: '8px', fontSize: '14px', width: '100%', boxSizing: 'border-box', background: 'white', outline: 'none' },
   submitBtn: { padding: '12px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
-
   taskCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', border: '1px solid #f0f0f0', padding: '15px', borderRadius: '10px', marginBottom: '10px', gap: '15px' },
   taskLeft: { flex: 1 },
   taskName: { fontWeight: '700', color: '#1a1a2e', fontSize: '15px', marginBottom: '5px' },
@@ -398,6 +359,5 @@ const s = {
   taskRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 },
   statusBadge: { padding: '4px 12px', borderRadius: '20px', color: 'white', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' },
   statusSelect: { padding: '6px 10px', border: '2px solid #eef0f4', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', background: 'white' },
-
   emptyState: { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '350px', textAlign: 'center' },
 };
