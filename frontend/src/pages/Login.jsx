@@ -7,44 +7,98 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    if (!email || !password) return setError('All fields are required');
+    setLoading(true);
     try {
       const res = await api.post('/auth/login', { email, password });
       login(res.data.user, res.data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Login</h2>
-        {error && <p style={styles.error}>{error}</p>}
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={s.logo}>✅</div>
+        <h2 style={s.title}>Welcome Back</h2>
+        <p style={s.subtitle}>Sign in to Team Task Manager</p>
+        {error && <div style={s.error}>⚠️ {error}</div>}
         <form onSubmit={handleSubmit}>
-          <input style={styles.input} type="email" placeholder="Email"
+          <label style={s.label}>Email Address</label>
+          <input style={s.input} type="email" placeholder="you@example.com"
             value={email} onChange={e => setEmail(e.target.value)} required />
-          <input style={styles.input} type="password" placeholder="Password"
+          <label style={s.label}>Password</label>
+          <input style={s.input} type="password" placeholder="••••••••"
             value={password} onChange={e => setPassword(e.target.value)} required />
-          <button style={styles.button} type="submit">Login</button>
+          <button style={{...s.btn, opacity: loading ? 0.7 : 1}}
+            type="submit" disabled={loading}>
+            {loading ? '⏳ Signing in...' : 'Sign In →'}
+          </button>
         </form>
-        <p style={styles.link}>Don't have an account? <Link to="/register">Register</Link></p>
+        <p style={s.link}>
+          Don't have an account?{' '}
+          <Link to="/register" style={s.a}>Create one here</Link>
+        </p>
       </div>
     </div>
   );
 }
 
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' },
-  card: { background: 'white', padding: '40px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', width: '350px' },
-  title: { textAlign: 'center', marginBottom: '20px', color: '#333' },
-  input: { width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '5px', border: '1px solid #ddd', boxSizing: 'border-box' },
-  button: { width: '100%', padding: '10px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px' },
-  error: { color: 'red', textAlign: 'center', marginBottom: '10px' },
-  link: { textAlign: 'center', marginTop: '15px' }
+const s = {
+  page: {
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '20px', fontFamily: "'Segoe UI', sans-serif"
+  },
+  card: {
+    background: 'white', borderRadius: '20px', padding: '45px 40px',
+    width: '100%', maxWidth: '420px',
+    boxShadow: '0 25px 60px rgba(0,0,0,0.25)'
+  },
+  logo: { fontSize: '45px', textAlign: 'center', marginBottom: '12px' },
+  title: {
+    textAlign: 'center', color: '#1a1a2e', fontSize: '26px',
+    fontWeight: '800', margin: '0 0 6px'
+  },
+  subtitle: {
+    textAlign: 'center', color: '#888', marginBottom: '28px',
+    fontSize: '14px', margin: '0 0 28px'
+  },
+  label: {
+    display: 'block', marginBottom: '6px', color: '#444',
+    fontSize: '13px', fontWeight: '600', letterSpacing: '0.5px'
+  },
+  input: {
+    width: '100%', padding: '12px 16px', marginBottom: '18px',
+    borderRadius: '10px', border: '2px solid #eef0f4', fontSize: '15px',
+    boxSizing: 'border-box', outline: 'none', transition: 'border 0.2s',
+    background: '#fafbfc'
+  },
+  btn: {
+    width: '100%', padding: '14px',
+    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    color: 'white', border: 'none', borderRadius: '10px',
+    fontSize: '16px', fontWeight: '700', cursor: 'pointer',
+    marginTop: '5px', letterSpacing: '0.5px',
+    boxShadow: '0 4px 15px rgba(102,126,234,0.4)'
+  },
+  error: {
+    background: '#fff5f5', border: '1px solid #feb2b2',
+    color: '#c53030', padding: '11px 15px', borderRadius: '10px',
+    marginBottom: '18px', fontSize: '14px', fontWeight: '500'
+  },
+  link: { textAlign: 'center', marginTop: '22px', color: '#888', fontSize: '14px' },
+  a: { color: '#667eea', fontWeight: '700', textDecoration: 'none' }
 };
