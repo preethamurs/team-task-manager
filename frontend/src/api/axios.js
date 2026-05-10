@@ -10,4 +10,13 @@ api.interceptors.request.use(config => {
   return config;
 });
 
+// Global response error interceptor
+api.interceptors.response.use(
+  res => res,
+  err => {
+    const message = err.response?.data?.message || err.message || 'Something went wrong';
+    return Promise.reject(new Error(message));
+  }
+);
+
 export default api;
