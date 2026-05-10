@@ -6,6 +6,9 @@ const prisma = new PrismaClient();
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
 
@@ -22,6 +25,9 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -34,6 +40,17 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
     res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true }
+    });
+    res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
