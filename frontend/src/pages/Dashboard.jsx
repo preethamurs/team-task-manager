@@ -10,8 +10,8 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    api.get('/tasks').then(res => setTasks(res.data));
-    api.get('/projects').then(res => setProjects(res.data));
+    api.get('/tasks').then(res => setTasks(res.data)).catch(() => {});
+    api.get('/projects').then(res => setProjects(res.data)).catch(() => {});
   }, []);
 
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -25,8 +25,9 @@ export default function Dashboard() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>Team Task Manager</h1>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={styles.welcome}>Welcome, {user?.name} ({user?.role})</span>
+          <button style={styles.projectsBtn} onClick={() => navigate('/projects')}>Manage Projects</button>
           <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>
       </div>
@@ -42,9 +43,12 @@ export default function Dashboard() {
       </div>
 
       <div style={styles.section}>
-        <h2>My Projects ({projects.length})</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2>My Projects ({projects.length})</h2>
+          <button style={styles.projectsBtn} onClick={() => navigate('/projects')}>View All →</button>
+        </div>
         {projects.length === 0 ? <p>No projects yet.</p> : projects.map(p => (
-          <div key={p.id} style={styles.projectCard}>
+          <div key={p.id} style={styles.projectCard} onClick={() => navigate('/projects')}>
             <h3>{p.name}</h3>
             <p>{p.description || 'No description'}</p>
             <p>{p.tasks?.length || 0} tasks · {p.members?.length || 0} members</p>
@@ -72,12 +76,13 @@ const styles = {
   container: { maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
   title: { color: '#4f46e5' },
-  welcome: { marginRight: '15px', color: '#555' },
+  welcome: { marginRight: '5px', color: '#555' },
   logoutBtn: { padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' },
+  projectsBtn: { padding: '8px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' },
   statsRow: { display: 'flex', gap: '15px', marginBottom: '30px' },
   statCard: { flex: 1, background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', textAlign: 'center' },
   section: { background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', marginBottom: '20px' },
-  projectCard: { border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '10px' },
+  projectCard: { border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '10px', cursor: 'pointer' },
   taskCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee', padding: '12px', borderRadius: '8px', marginBottom: '8px' },
   badge: { padding: '4px 10px', borderRadius: '20px', color: 'white', fontSize: '12px' }
 };
