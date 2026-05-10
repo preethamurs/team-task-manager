@@ -281,25 +281,38 @@ export default function Projects() {
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
-    clearMessages();
+  clearMessages();
 
-    try {
-      const res = await api.put(`/tasks/${taskId}`, {
-        status: newStatus
-      });
+  const currentTask = tasks.find(task => task.id === taskId);
 
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId ? res.data : task
-        )
-      );
+  if (!currentTask) {
+    return setError('Task not found');
+  }
 
-      setSuccess('✅ Task status updated!');
-      setTimeout(() => setSuccess(''), 2000);
-    } catch (e) {
-      setError('Failed to update task status');
-    }
-  };
+  try {
+    const res = await api.put(`/tasks/${taskId}`, {
+      title: currentTask.title,
+      description: currentTask.description || '',
+      status: newStatus,
+      assignedToId: currentTask.assignedToId || currentTask.assignedTo?.id || null,
+      dueDate: currentTask.dueDate
+        ? currentTask.dueDate.split('T')[0]
+        : null
+    });
+
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId ? res.data : task
+      )
+    );
+
+    setSuccess('✅ Task status updated!');
+    setTimeout(() => setSuccess(''), 2000);
+  } catch (err) {
+    console.log('Status update error:', err.response?.data || err.message);
+    setError(err.response?.data?.message || 'Failed to update task');
+  }
+};
 
   const openEditTask = (task) => {
     clearMessages();
@@ -730,8 +743,7 @@ export default function Projects() {
                         <select
                           style={s.statusSelect}
                           value={task.status}
-                          onChange={(e) =>
-                            handleStatusChange(task.id, e.target.value)
+                          onChange={(e) =>handleStatusChange(task.id, e.target.value)
                           }
                         >
                           {statusOptions.map((option) => (
