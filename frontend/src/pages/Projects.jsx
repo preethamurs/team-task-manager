@@ -280,39 +280,30 @@ export default function Projects() {
     }
   };
 
-  const handleStatusChange = async (taskId, newStatus) => {
-  clearMessages();
+    const handleStatusChange = async (taskId, newStatus) => {
+    clearMessages();
 
-  const currentTask = tasks.find(task => task.id === taskId);
+    try {
+      await api.put(`/tasks/${taskId}`, { 
+        status: newStatus 
+      });
 
-  if (!currentTask) {
-    return setError('Task not found');
-  }
+      // Update UI immediately
+      setTasks(prev =>
+        prev.map(task =>
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      );
 
-  try {
-    const res = await api.put(`/tasks/${taskId}`, {
-      title: currentTask.title,
-      description: currentTask.description || '',
-      status: newStatus,
-      assignedToId: currentTask.assignedToId || currentTask.assignedTo?.id || null,
-      dueDate: currentTask.dueDate
-        ? currentTask.dueDate.split('T')[0]
-        : null
-    });
+      setSuccess(`✅ Status updated to ${newStatus.replace('_', ' ')}`);
+      setTimeout(() => setSuccess(''), 2000);
 
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === taskId ? res.data : task
-      )
-    );
+    } catch (err) {
+      console.error("Status update error:", err.response?.data || err);
+      setError(err.response?.data?.message || 'Failed to update task');
+    }
+  };
 
-    setSuccess('✅ Task status updated!');
-    setTimeout(() => setSuccess(''), 2000);
-  } catch (err) {
-    console.log('Status update error:', err.response?.data || err.message);
-    setError(err.response?.data?.message || 'Failed to update task');
-  }
-};
 
   const openEditTask = (task) => {
     clearMessages();
@@ -878,10 +869,11 @@ export default function Projects() {
             </div>
 
             <form onSubmit={handleUpdateTask} style={s.form}>
+                
               <label style={s.label}>Task Title *</label>
               <input
                 style={s.input}
-                value={editingTask.title}
+                value={editingTask.status || "TODO"}
                 onChange={(e) =>
                   setEditingTask({
                     ...editingTask,
