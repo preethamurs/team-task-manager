@@ -74,7 +74,11 @@ export default function Projects() {
     e.preventDefault();
     setError(''); setLoading(true);
     try {
-      await api.post('/tasks', { ...taskForm, projectId: selectedProject.id });
+      await api.post('/tasks', {
+        ...taskForm,
+        projectId: selectedProject.id,
+        assignedToId: taskForm.assignedToId ? parseInt(taskForm.assignedToId) : null
+      });
       setSuccess('Task created!');
       setTaskForm({ title: '', description: '', assignedToId: '', dueDate: '' });
       setShowTaskForm(false);
@@ -101,7 +105,6 @@ export default function Projects() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>Team Task Manager</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -111,12 +114,10 @@ export default function Projects() {
         </div>
       </div>
 
-      {/* Messages */}
       {error && <div style={styles.error}>{error}</div>}
       {success && <div style={styles.success}>{success}</div>}
 
       <div style={styles.layout}>
-        {/* Left Panel - Projects List */}
         <div style={styles.leftPanel}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <h2 style={{ margin: 0 }}>Projects</h2>
@@ -127,7 +128,6 @@ export default function Projects() {
             )}
           </div>
 
-          {/* Create Project Form */}
           {showForm && (
             <form onSubmit={handleCreateProject} style={styles.form}>
               <input
@@ -149,7 +149,6 @@ export default function Projects() {
             </form>
           )}
 
-          {/* Projects List */}
           {projects.length === 0 ? (
             <p style={{ color: '#888' }}>No projects yet.{user?.role === 'ADMIN' ? ' Create one above!' : ''}</p>
           ) : (
@@ -171,7 +170,6 @@ export default function Projects() {
           )}
         </div>
 
-        {/* Right Panel - Tasks */}
         <div style={styles.rightPanel}>
           {!selectedProject ? (
             <div style={styles.emptyState}>
@@ -188,7 +186,6 @@ export default function Projects() {
                 )}
               </div>
 
-              {/* Create Task Form */}
               {showTaskForm && (
                 <form onSubmit={handleCreateTask} style={styles.form}>
                   <input
@@ -219,7 +216,6 @@ export default function Projects() {
                     type="date"
                     value={taskForm.dueDate}
                     onChange={e => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                    placeholder="Due Date"
                   />
                   <button style={styles.submitBtn} type="submit" disabled={loading}>
                     {loading ? 'Creating...' : 'Create Task'}
@@ -227,7 +223,6 @@ export default function Projects() {
                 </form>
               )}
 
-              {/* Tasks List */}
               {tasks.length === 0 ? (
                 <p style={{ color: '#888' }}>No tasks yet.{user?.role === 'ADMIN' ? ' Add one above!' : ''}</p>
               ) : (
